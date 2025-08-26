@@ -4,9 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Engwerda Studios</title>
-    <!-- Tailwind CSS for styling -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Google Fonts for a nicer look -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
@@ -31,18 +29,15 @@
 </head>
 <body class="text-gray-800">
 
-    <!-- Header Section -->
     <header class="bg-red-800 text-white p-6 text-center shadow-lg">
         <h1 class="text-4xl md:text-5xl font-bold">Engwerda Studios</h1>
     </header>
 
     <main class="container mx-auto p-4 md:p-8 max-w-4xl">
-        <!-- Loading Indicator -->
         <div id="loading" class="text-center py-10">
             <p class="text-lg text-gray-500">Loading Studio...</p>
         </div>
 
-        <!-- Login View -->
         <div id="login" class="hidden bg-white p-8 rounded-xl shadow-md max-w-sm mx-auto">
             <h2 class="text-2xl font-bold text-red-800 mb-6 text-center">Enter Password</h2>
             <div class="space-y-4">
@@ -53,21 +48,16 @@
             </div>
         </div>
 
-        <!-- Studio & Admin View Container -->
         <div id="content-view" class="hidden bg-white p-6 md:p-8 rounded-xl shadow-md">
-            <!-- Breadcrumb Navigation -->
             <div id="breadcrumb" class="mb-4 text-gray-500"></div>
             
-            <!-- Admin Controls (visible only to admin) -->
             <div id="admin-controls" class="hidden mb-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
                 <h3 class="text-xl font-semibold text-red-800 mb-4">Admin Panel</h3>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <!-- Add Folder -->
                     <div class="space-y-2">
                         <input type="text" id="folderName" placeholder="New Folder Name" class="w-full px-3 py-2 border rounded-md">
                         <button id="addFolderBtn" class="w-full bg-blue-600 text-white font-semibold py-2 px-4 rounded-md hover:bg-blue-700">Add Folder</button>
                     </div>
-                    <!-- Add Link -->
                     <div class="space-y-2">
                         <input type="text" id="linkName" placeholder="Link Name" class="w-full px-3 py-2 border rounded-md">
                         <input type="text" id="linkURL" placeholder="Link URL" class="w-full px-3 py-2 border rounded-md">
@@ -76,13 +66,10 @@
                 </div>
             </div>
 
-            <!-- File & Folder Display Area -->
             <div id="fileArea" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-                <!-- Items will be dynamically inserted here -->
-            </div>
+                </div>
              <p id="empty-folder-msg" class="hidden text-center text-gray-500 py-8">This folder is empty.</p>
 
-            <!-- Navigation Buttons -->
             <div class="mt-8 pt-6 border-t border-gray-200 flex items-center justify-between">
                 <button id="backButton" class="bg-gray-600 text-white font-bold py-2 px-5 rounded-lg hover:bg-gray-700 disabled:bg-gray-300 disabled:cursor-not-allowed">Back</button>
                 <button id="logoutButton" class="bg-red-700 text-white font-bold py-2 px-5 rounded-lg hover:bg-red-800">Logout</button>
@@ -90,12 +77,10 @@
         </div>
     </main>
 
-    <!-- Notification Toast -->
     <div id="notification" class="fixed bottom-5 right-5 bg-gray-800 text-white px-6 py-3 rounded-lg shadow-xl translate-x-[120%] opacity-0">
         <p id="notification-text"></p>
     </div>
 
-    <!-- Confirmation Modal -->
     <div id="confirm-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
         <div class="bg-white p-6 rounded-lg shadow-xl max-w-sm w-full">
             <h3 class="text-lg font-bold mb-4" id="confirm-modal-title">Are you sure?</h3>
@@ -107,30 +92,20 @@
         </div>
     </div>
 
-    <!-- Firebase SDKs -->
-    <script type="module">
-        // Import necessary Firebase functions
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, getDoc, setDoc, onSnapshot, setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-
+    <script>
         // --- GLOBAL STATE & CONFIG ---
-        
-        // Use provided Firebase config and App ID, with defaults for local testing
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'engwerda-studios-default';
-        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
 
-        // Initialize Firebase
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db = getFirestore(app);
-        setLogLevel('debug'); // For detailed console logs
+        // The key used to store data in local storage
+        const LOCAL_STORAGE_KEY = 'engwerda-studio-data';
+        // A simple key to track login status
+        const AUTH_KEY = 'engwerda-studio-auth';
 
-        // App state variables
-        let fileStructure = { name: "Home", folders: [], links: [] };
+        // Initial, default file structure if none exists in local storage
+        const defaultFileStructure = { name: "Home", folders: [], links: [] };
+
+        let fileStructure = {};
         let currentPath = []; // An array of indices to navigate the structure
         let isAdmin = false;
-        let unsubscribe; // To detach the Firestore listener on logout
 
         // --- DOM ELEMENT REFERENCES ---
         const DOMElements = {
@@ -158,84 +133,115 @@
             confirmModalConfirm: document.getElementById('confirm-modal-confirm'),
         };
 
-        // --- AUTHENTICATION ---
-        
-        onAuthStateChanged(auth, async (user) => {
-            if (user) {
-                // User is signed in, show the login screen to determine role (admin/user)
-                console.log("User authenticated with UID:", user.uid);
-                DOMElements.loading.style.display = 'none';
-                DOMElements.loginView.style.display = 'block';
-            } else {
-                // User is signed out, attempt to sign in
-                console.log("No user found, attempting sign-in...");
-                try {
-                    if (typeof __initial_auth_token !== 'undefined') {
-                        await signInWithCustomToken(auth, __initial_auth_token);
-                    } else {
-                        await signInAnonymously(auth);
-                    }
-                } catch (error) {
-                    console.error("Authentication failed:", error);
-                    showNotification("Error: Could not authenticate.", "error");
-                }
-            }
-        });
-
-        // --- FIRESTORE DATABASE ---
+        // --- DATA MANAGEMENT (Local Storage) ---
 
         /**
-         * Attaches a real-time listener to the Firestore document.
+         * Loads the file structure from local storage.
          */
-        function attachFirestoreListener() {
-            // FIX: Corrected the document path to have an even number of segments.
-            // A document path must point to a document within a collection.
-            // The path now correctly points to a document 'fileSystem' inside a collection 'content'.
-            const docRef = doc(db, `artifacts/${appId}/public/data/content`, "fileSystem");
-            
-            // Unsubscribe from any previous listener before creating a new one
-            if (unsubscribe) unsubscribe();
-
-            unsubscribe = onSnapshot(docRef, (docSnap) => {
-                if (docSnap.exists()) {
-                    console.log("Firestore data received:", docSnap.data().structure);
-                    // Ensure the structure is valid before assigning
-                    if (docSnap.data().structure) {
-                        fileStructure = docSnap.data().structure;
-                    }
+        function loadStructure() {
+            try {
+                const storedData = localStorage.getItem(LOCAL_STORAGE_KEY);
+                if (storedData) {
+                    fileStructure = JSON.parse(storedData);
+                    console.log("Structure loaded from local storage.");
                 } else {
-                    // If no document exists, create one with the default structure
-                    console.log("No document found, creating initial structure.");
-                    saveStructure(); 
+                    console.log("No structure found, using default.");
+                    fileStructure = defaultFileStructure;
                 }
-                render(); // Re-render the UI with the new data
-            }, (error) => {
-                console.error("Firestore listener error:", error);
-                showNotification("Error connecting to the database.", "error");
-            });
+            } catch (error) {
+                console.error("Error loading from local storage:", error);
+                fileStructure = defaultFileStructure;
+            }
         }
 
         /**
-         * Saves the current file structure to Firestore.
+         * Saves the current file structure to local storage.
          */
-        async function saveStructure() {
-            if (!auth.currentUser) {
-                showNotification("You must be logged in to save changes.", "error");
-                return;
-            }
+        function saveStructure() {
             try {
-                // FIX: Corrected the document path to match the listener's path.
-                const docRef = doc(db, `artifacts/${appId}/public/data/content`, "fileSystem");
-                await setDoc(docRef, { structure: fileStructure });
-                console.log("Structure saved to Firestore.");
+                localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(fileStructure));
+                console.log("Structure saved to local storage.");
+                render(); // Re-render the UI after saving
             } catch (error) {
-                console.error("Error saving to Firestore:", error);
+                console.error("Error saving to local storage:", error);
                 showNotification("Failed to save changes.", "error");
             }
         }
 
-        // --- RENDERING LOGIC ---
+        // --- AUTHENTICATION & VIEWS ---
 
+        /**
+         * Checks password and sets the view (Studio or Admin).
+         */
+        function handleLogin() {
+            const pw = DOMElements.passwordInput.value;
+            DOMElements.passwordInput.value = '';
+
+            if (pw === "Austin") {
+                isAdmin = false;
+                localStorage.setItem(AUTH_KEY, "user");
+                showContentView();
+            } else if (pw === "Admin") {
+                isAdmin = true;
+                localStorage.setItem(AUTH_KEY, "admin");
+                showContentView();
+            } else {
+                showNotification("Wrong password. Please try again.", "error");
+            }
+        }
+
+        /**
+         * Switches the view to the main content area after successful login.
+         */
+        function showContentView() {
+            DOMElements.loading.style.display = 'none';
+            DOMElements.loginView.style.display = 'none';
+            DOMElements.contentView.style.display = 'block';
+            DOMElements.adminControls.style.display = isAdmin ? 'block' : 'none';
+            render();
+        }
+
+        /**
+         * Navigates one level up in the folder structure.
+         */
+        function handleGoBack() {
+            if (currentPath.length > 0) {
+                currentPath.pop();
+                render();
+            }
+        }
+
+        /**
+         * Logs the user out and returns to the login screen.
+         */
+        function handleLogout() {
+            currentPath = [];
+            isAdmin = false;
+            localStorage.removeItem(AUTH_KEY);
+            DOMElements.contentView.style.display = 'none';
+            DOMElements.loginView.style.display = 'block';
+            DOMElements.loading.style.display = 'none';
+        }
+
+        /**
+         * Initializes the app by checking for a logged-in state.
+         */
+        function initializeApp() {
+            DOMElements.loading.style.display = 'block';
+            loadStructure();
+            const authStatus = localStorage.getItem(AUTH_KEY);
+
+            if (authStatus) {
+                isAdmin = authStatus === "admin";
+                showContentView();
+            } else {
+                DOMElements.loading.style.display = 'none';
+                DOMElements.loginView.style.display = 'block';
+            }
+        }
+        
+        // --- RENDERING LOGIC ---
+        
         /**
          * Main render function to update the entire UI based on state.
          */
@@ -243,34 +249,29 @@
             const currentFolder = getCurrentFolder();
             if (!currentFolder) {
                 console.error("Could not find current folder at path:", currentPath);
-                // Reset to root if path is invalid and try again
                 currentPath = [];
                 render();
                 return;
             }
             
-            // Render breadcrumbs for navigation
+            // Render breadcrumbs
             renderBreadcrumb();
 
             // Clear the file area
             DOMElements.fileArea.innerHTML = '';
             
             const items = [...(currentFolder.folders || []), ...(currentFolder.links || [])];
+            DOMElements.emptyFolderMsg.style.display = items.length === 0 ? 'block' : 'none';
 
-            if (items.length === 0) {
-                DOMElements.emptyFolderMsg.style.display = 'block';
-            } else {
-                DOMElements.emptyFolderMsg.style.display = 'none';
-                 // Render folders
-                (currentFolder.folders || []).forEach((folder, index) => {
-                    DOMElements.fileArea.appendChild(createItemElement(folder, 'folder', index));
-                });
+            // Render folders
+            (currentFolder.folders || []).forEach((folder, index) => {
+                DOMElements.fileArea.appendChild(createItemElement(folder, 'folder', index));
+            });
 
-                // Render links
-                (currentFolder.links || []).forEach((link, index) => {
-                    DOMElements.fileArea.appendChild(createItemElement(link, 'link', index));
-                });
-            }
+            // Render links
+            (currentFolder.links || []).forEach((link, index) => {
+                DOMElements.fileArea.appendChild(createItemElement(link, 'link', index));
+            });
 
             // Update button states
             DOMElements.backButton.disabled = currentPath.length === 0;
@@ -289,7 +290,7 @@
             wrapper.className = 'item relative group flex flex-col items-center justify-center p-4 border-2 border-gray-200 rounded-lg text-center cursor-pointer hover:border-red-500 hover:bg-red-50';
 
             // SVG Icon for visual distinction
-            const icon = isFolder 
+            const icon = isFolder
                 ? `<svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mb-2 text-yellow-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" /></svg>`
                 : `<svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mb-2 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" /></svg>`;
             
@@ -355,37 +356,9 @@
                 }
             });
         }
-
-
+        
         // --- EVENT HANDLERS & ACTIONS ---
-
-        /**
-         * Checks password and sets the view (Studio or Admin).
-         */
-        function handleLogin() {
-            const pw = DOMElements.passwordInput.value;
-            if (pw === "Austin") {
-                isAdmin = false;
-                showContentView();
-            } else if (pw === "Admin") {
-                isAdmin = true;
-                showContentView();
-            } else {
-                showNotification("Wrong password. Please try again.", "error");
-            }
-            DOMElements.passwordInput.value = '';
-        }
-
-        /**
-         * Switches the view to the main content area after successful login.
-         */
-        function showContentView() {
-            DOMElements.loginView.style.display = 'none';
-            DOMElements.contentView.style.display = 'block';
-            DOMElements.adminControls.style.display = isAdmin ? 'block' : 'none';
-            attachFirestoreListener(); // Start listening for data from Firestore
-        }
-
+        
         /**
          * Handles adding a new folder.
          */
@@ -439,28 +412,6 @@
                 showNotification(`"${itemName}" was deleted.`, "success");
             }
         }
-
-        /**
-         * Navigates one level up in the folder structure.
-         */
-        function handleGoBack() {
-            if (currentPath.length > 0) {
-                currentPath.pop();
-                render();
-            }
-        }
-
-        /**
-         * Logs the user out and returns to the login screen.
-         */
-        function handleLogout() {
-            currentPath = [];
-            isAdmin = false;
-            if (unsubscribe) unsubscribe(); // Stop listening to Firestore to prevent memory leaks
-            DOMElements.contentView.style.display = 'none';
-            DOMElements.loginView.style.display = 'block';
-        }
-
 
         // --- UTILITY FUNCTIONS ---
 
@@ -543,6 +494,8 @@
         DOMElements.backButton.addEventListener('click', handleGoBack);
         DOMElements.logoutButton.addEventListener('click', handleLogout);
 
+        // Start the application
+        initializeApp();
     </script>
 </body>
 </html>

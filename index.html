@@ -39,11 +39,32 @@
         </div>
         
         <div id="public-view" class="hidden bg-white p-6 md:p-8 rounded-xl shadow-md">
-            <h2 class="text-2xl font-bold text-red-800 mb-6 text-center">Recent Studio Projects</h2>
+            <p class="text-lg font-semibold mb-6 text-center">My studio name is Engwerda Studios. I, Austin Engwerda make movies with my friends and family. I started making films at the start of the covid 19 lockdown in 2020. They include a budget, a script, a cast , and editing the movie on CapCut. Please Subscribe and like to my channel Engwerda Studios.</p>
             
-            <div id="publicFileArea" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-                </div>
-            <p id="empty-public-msg" class="hidden text-center text-gray-500 py-8">No public projects to display.</p>
+            <h2 class="text-2xl font-bold text-red-800 mb-6 text-center">Latest Projects</h2>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+                <a href="https://youtu.be/kSL0ma11K5A?si=648oA3TVukLqFAXB" target="_blank" class="block group">
+                    <div class="rounded-lg overflow-hidden shadow-lg transform group-hover:scale-105 transition-transform duration-300">
+                        <img src="https://i.ytimg.com/vi/kSL0ma11K5A/mqdefault.jpg" alt="M.C.R. Thumbnail" class="w-full h-auto object-cover">
+                    </div>
+                    <p class="text-center font-semibold mt-2 group-hover:underline">MCR: A Short Film</p>
+                </a>
+                
+                <a href="https://youtu.be/MURjoBiJ1BI?si=KFvVkXH93ANzexq8" target="_blank" class="block group">
+                    <div class="rounded-lg overflow-hidden shadow-lg transform group-hover:scale-105 transition-transform duration-300">
+                        <img src="https://i.ytimg.com/vi/MURjoBiJ1BI/mqdefault.jpg" alt="Top Gun (Clean Version) Thumbnail" class="w-full h-auto object-cover">
+                    </div>
+                    <p class="text-center font-semibold mt-2 group-hover:underline">Top Gun (Clean Version)</p>
+                </a>
+                
+                <a href="https://youtu.be/pyz3HLDYdRE?si=fH-zCpbSplI99_w0" target="_blank" class="block group">
+                    <div class="rounded-lg overflow-hidden shadow-lg transform group-hover:scale-105 transition-transform duration-300">
+                        <img src="https://i.ytimg.com/vi/pyz3HLDYdRE/mqdefault.jpg" alt="Foux Da Fa Fa-Flight of the Conchords Thumbnail" class="w-full h-auto object-cover">
+                    </div>
+                    <p class="text-center font-semibold mt-2 group-hover:underline">Foux Da Fa Fa-Flight of the conchords</p>
+                </a>
+            </div>
             
             <div class="mt-8 pt-6 border-t border-gray-200 text-center">
                 <button id="showLoginBtn" class="text-blue-600 font-bold hover:underline">Log in to Engwerda Studios</button>
@@ -120,15 +141,6 @@
             name: "Home",
             folders: [
                 {
-                    name: "Public",
-                    folders: [],
-                    links: [
-                        { name: "Project Alpha", url: "https://example.com/project-alpha" },
-                        { name: "Project Beta", url: "https://example.com/project-beta" },
-                        { name: "Project Gamma", url: "https://example.com/project-gamma" }
-                    ]
-                },
-                {
                     name: "Private",
                     folders: [],
                     links: []
@@ -145,8 +157,6 @@
         const DOMElements = {
             loading: document.getElementById('loading'),
             publicView: document.getElementById('public-view'),
-            publicFileArea: document.getElementById('publicFileArea'),
-            emptyPublicMsg: document.getElementById('empty-public-msg'),
             showLoginBtn: document.getElementById('showLoginBtn'),
             hideLoginBtn: document.getElementById('hideLoginBtn'),
             loginView: document.getElementById('login'),
@@ -210,30 +220,12 @@
         // --- VIEW MANAGEMENT & AUTHENTICATION ---
 
         /**
-         * Renders the public view with contents from the 'Public' folder.
+         * Renders the public view.
          */
         function renderPublicView() {
             DOMElements.loginView.classList.add('hidden');
             DOMElements.contentView.classList.add('hidden');
             DOMElements.publicView.classList.remove('hidden');
-
-            const publicFolder = fileStructure.folders.find(f => f.name === "Public");
-            if (!publicFolder) {
-                DOMElements.emptyPublicMsg.classList.remove('hidden');
-                return;
-            }
-
-            DOMElements.publicFileArea.innerHTML = '';
-            const publicItems = [...(publicFolder.folders || []), ...(publicFolder.links || [])];
-            DOMElements.emptyPublicMsg.classList.toggle('hidden', publicItems.length > 0);
-
-            publicItems.forEach((item, index) => {
-                const isFolder = item.folders !== undefined;
-                const wrapper = createItemElement(item, isFolder ? 'folder' : 'link', index);
-                const deleteBtn = wrapper.querySelector('button');
-                if(deleteBtn) deleteBtn.remove();
-                DOMElements.publicFileArea.appendChild(wrapper);
-            });
         }
 
         /**

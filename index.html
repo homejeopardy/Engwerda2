@@ -37,14 +37,29 @@
         <div id="loading" class="text-center py-10">
             <p class="text-lg text-gray-500">Loading Studio...</p>
         </div>
+        
+        <div id="public-view" class="hidden bg-white p-6 md:p-8 rounded-xl shadow-md">
+            <h2 class="text-2xl font-bold text-red-800 mb-6 text-center">Recent Studio Projects</h2>
+            
+            <div id="publicFileArea" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                </div>
+            <p id="empty-public-msg" class="hidden text-center text-gray-500 py-8">No public projects to display.</p>
+            
+            <div class="mt-8 pt-6 border-t border-gray-200 text-center">
+                <button id="showLoginBtn" class="text-blue-600 font-bold hover:underline">Log in to Engwerda Studios</button>
+            </div>
+        </div>
 
-        <div id="login" class="hidden bg-white p-8 rounded-xl shadow-md max-w-sm mx-auto">
-            <h2 class="text-2xl font-bold text-red-800 mb-6 text-center">Enter Password</h2>
-            <div class="space-y-4">
-                <input type="password" id="password" placeholder="Password" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:outline-none">
-                <button id="loginButton" class="w-full bg-red-700 text-white font-bold py-2 px-4 rounded-lg hover:bg-red-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
-                    Enter
-                </button>
+        <div id="login" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div class="bg-white p-8 rounded-xl shadow-md max-w-sm w-full">
+                <h2 class="text-2xl font-bold text-red-800 mb-6 text-center">Enter Password</h2>
+                <div class="space-y-4">
+                    <input type="password" id="password" placeholder="Password" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:outline-none">
+                    <button id="loginButton" class="w-full bg-red-700 text-white font-bold py-2 px-4 rounded-lg hover:bg-red-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
+                        Enter
+                    </button>
+                </div>
+                <button id="hideLoginBtn" class="mt-4 w-full bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded-lg hover:bg-gray-400">Cancel</button>
             </div>
         </div>
 
@@ -68,7 +83,7 @@
 
             <div id="fileArea" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
                 </div>
-             <p id="empty-folder-msg" class="hidden text-center text-gray-500 py-8">This folder is empty.</p>
+            <p id="empty-folder-msg" class="hidden text-center text-gray-500 py-8">This folder is empty.</p>
 
             <div class="mt-8 pt-6 border-t border-gray-200 flex items-center justify-between">
                 <button id="backButton" class="bg-gray-600 text-white font-bold py-2 px-5 rounded-lg hover:bg-gray-700 disabled:bg-gray-300 disabled:cursor-not-allowed">Back</button>
@@ -101,7 +116,26 @@
         const AUTH_KEY = 'engwerda-studio-auth';
 
         // Initial, default file structure if none exists in local storage
-        const defaultFileStructure = { name: "Home", folders: [], links: [] };
+        const defaultFileStructure = {
+            name: "Home",
+            folders: [
+                {
+                    name: "Public",
+                    folders: [],
+                    links: [
+                        { name: "Project Alpha", url: "https://example.com/project-alpha" },
+                        { name: "Project Beta", url: "https://example.com/project-beta" },
+                        { name: "Project Gamma", url: "https://example.com/project-gamma" }
+                    ]
+                },
+                {
+                    name: "Private",
+                    folders: [],
+                    links: []
+                }
+            ],
+            links: []
+        };
 
         let fileStructure = {};
         let currentPath = []; // An array of indices to navigate the structure
@@ -110,6 +144,11 @@
         // --- DOM ELEMENT REFERENCES ---
         const DOMElements = {
             loading: document.getElementById('loading'),
+            publicView: document.getElementById('public-view'),
+            publicFileArea: document.getElementById('publicFileArea'),
+            emptyPublicMsg: document.getElementById('empty-public-msg'),
+            showLoginBtn: document.getElementById('showLoginBtn'),
+            hideLoginBtn: document.getElementById('hideLoginBtn'),
             loginView: document.getElementById('login'),
             contentView: document.getElementById('content-view'),
             passwordInput: document.getElementById('password'),
@@ -167,8 +206,49 @@
                 showNotification("Failed to save changes.", "error");
             }
         }
+        
+        // --- VIEW MANAGEMENT & AUTHENTICATION ---
 
-        // --- AUTHENTICATION & VIEWS ---
+        /**
+         * Renders the public view with contents from the 'Public' folder.
+         */
+        function renderPublicView() {
+            DOMElements.loginView.classList.add('hidden');
+            DOMElements.contentView.classList.add('hidden');
+            DOMElements.publicView.classList.remove('hidden');
+
+            const publicFolder = fileStructure.folders.find(f => f.name === "Public");
+            if (!publicFolder) {
+                DOMElements.emptyPublicMsg.classList.remove('hidden');
+                return;
+            }
+
+            DOMElements.publicFileArea.innerHTML = '';
+            const publicItems = [...(publicFolder.folders || []), ...(publicFolder.links || [])];
+            DOMElements.emptyPublicMsg.classList.toggle('hidden', publicItems.length > 0);
+
+            publicItems.forEach((item, index) => {
+                const isFolder = item.folders !== undefined;
+                const wrapper = createItemElement(item, isFolder ? 'folder' : 'link', index);
+                const deleteBtn = wrapper.querySelector('button');
+                if(deleteBtn) deleteBtn.remove();
+                DOMElements.publicFileArea.appendChild(wrapper);
+            });
+        }
+
+        /**
+         * Shows the login modal.
+         */
+        function showLoginModal() {
+            DOMElements.loginView.classList.remove('hidden');
+        }
+
+        /**
+         * Hides the login modal.
+         */
+        function hideLoginModal() {
+            DOMElements.loginView.classList.add('hidden');
+        }
 
         /**
          * Checks password and sets the view (Studio or Admin).
@@ -194,10 +274,17 @@
          * Switches the view to the main content area after successful login.
          */
         function showContentView() {
-            DOMElements.loading.style.display = 'none';
-            DOMElements.loginView.style.display = 'none';
-            DOMElements.contentView.style.display = 'block';
+            DOMElements.loginView.classList.add('hidden');
+            DOMElements.publicView.classList.add('hidden');
+            DOMElements.contentView.classList.remove('hidden');
             DOMElements.adminControls.style.display = isAdmin ? 'block' : 'none';
+            // Set the path to a specific folder for the user, e.g., the 'Private' folder
+            const privateFolderIndex = fileStructure.folders.findIndex(f => f.name === 'Private');
+            if (privateFolderIndex !== -1) {
+                currentPath = [privateFolderIndex];
+            } else {
+                currentPath = [];
+            }
             render();
         }
 
@@ -212,22 +299,20 @@
         }
 
         /**
-         * Logs the user out and returns to the login screen.
+         * Logs the user out and returns to the public view.
          */
         function handleLogout() {
             currentPath = [];
             isAdmin = false;
             localStorage.removeItem(AUTH_KEY);
-            DOMElements.contentView.style.display = 'none';
-            DOMElements.loginView.style.display = 'block';
-            DOMElements.loading.style.display = 'none';
+            renderPublicView();
         }
 
         /**
          * Initializes the app by checking for a logged-in state.
          */
         function initializeApp() {
-            DOMElements.loading.style.display = 'block';
+            DOMElements.loading.style.display = 'none';
             loadStructure();
             const authStatus = localStorage.getItem(AUTH_KEY);
 
@@ -235,8 +320,7 @@
                 isAdmin = authStatus === "admin";
                 showContentView();
             } else {
-                DOMElements.loading.style.display = 'none';
-                DOMElements.loginView.style.display = 'block';
+                renderPublicView();
             }
         }
         
@@ -254,42 +338,32 @@
                 return;
             }
             
-            // Render breadcrumbs
             renderBreadcrumb();
 
-            // Clear the file area
             DOMElements.fileArea.innerHTML = '';
             
             const items = [...(currentFolder.folders || []), ...(currentFolder.links || [])];
             DOMElements.emptyFolderMsg.style.display = items.length === 0 ? 'block' : 'none';
 
-            // Render folders
             (currentFolder.folders || []).forEach((folder, index) => {
                 DOMElements.fileArea.appendChild(createItemElement(folder, 'folder', index));
             });
 
-            // Render links
             (currentFolder.links || []).forEach((link, index) => {
                 DOMElements.fileArea.appendChild(createItemElement(link, 'link', index));
             });
 
-            // Update button states
             DOMElements.backButton.disabled = currentPath.length === 0;
         }
 
         /**
          * Creates an HTML element for a folder or link.
-         * @param {object} item - The folder or link object.
-         * @param {string} type - 'folder' or 'link'.
-         * @param {number} index - The index of the item in its array.
-         * @returns {HTMLElement} The created DOM element.
          */
         function createItemElement(item, type, index) {
             const isFolder = type === 'folder';
             const wrapper = document.createElement('div');
             wrapper.className = 'item relative group flex flex-col items-center justify-center p-4 border-2 border-gray-200 rounded-lg text-center cursor-pointer hover:border-red-500 hover:bg-red-50';
 
-            // SVG Icon for visual distinction
             const icon = isFolder
                 ? `<svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mb-2 text-yellow-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" /></svg>`
                 : `<svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mb-2 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" /></svg>`;
@@ -299,7 +373,6 @@
                 <span class="break-words w-full font-semibold text-gray-700">${item.name}</span>
             `;
 
-            // Click handler for navigation or opening links
             wrapper.addEventListener('click', () => {
                 if (isFolder) {
                     currentPath.push(index);
@@ -309,23 +382,21 @@
                 }
             });
 
-            // If admin, add a delete button
             if (isAdmin) {
                 const deleteBtn = document.createElement('button');
-                deleteBtn.innerHTML = `&times;`; // 'x' symbol for delete
+                deleteBtn.innerHTML = `&times;`; 
                 deleteBtn.className = 'absolute top-1 right-1 h-6 w-6 bg-red-500 text-white rounded-full flex items-center justify-center font-bold opacity-0 group-hover:opacity-100 hover:bg-red-700';
                 deleteBtn.onclick = (e) => {
-                    e.stopPropagation(); // Prevent folder navigation when clicking delete
+                    e.stopPropagation();
                     handleDeleteItem(type, index);
                 };
                 wrapper.appendChild(deleteBtn);
             }
-
             return wrapper;
         }
 
         /**
-         * Renders the breadcrumb navigation path for easy navigation.
+         * Renders the breadcrumb navigation path.
          */
         function renderBreadcrumb() {
             DOMElements.breadcrumb.innerHTML = '';
@@ -359,9 +430,6 @@
         
         // --- EVENT HANDLERS & ACTIONS ---
         
-        /**
-         * Handles adding a new folder.
-         */
         function handleAddFolder() {
             const name = DOMElements.folderNameInput.value.trim();
             if (!name) {
@@ -376,9 +444,6 @@
             showNotification(`Folder "${name}" added.`, "success");
         }
 
-        /**
-         * Handles adding a new link.
-         */
         function handleAddLink() {
             const name = DOMElements.linkNameInput.value.trim();
             const url = DOMElements.linkURLInput.value.trim();
@@ -395,11 +460,6 @@
             showNotification(`Link "${name}" added.`, "success");
         }
         
-        /**
-         * Handles deleting an item (folder or link) after confirmation.
-         * @param {string} type - 'folder' or 'link'.
-         * @param {number} index - The index of the item to delete.
-         */
         async function handleDeleteItem(type, index) {
             const currentFolder = getCurrentFolder();
             const itemArray = type === 'folder' ? currentFolder.folders : currentFolder.links;
@@ -414,51 +474,35 @@
         }
 
         // --- UTILITY FUNCTIONS ---
-
-        /**
-         * Traverses the fileStructure using the currentPath to get the current folder object.
-         * @returns {object} The current folder object.
-         */
+        
         function getCurrentFolder() {
             let current = fileStructure;
             for (const index of currentPath) {
                 if (current && current.folders && current.folders[index]) {
                     current = current.folders[index];
                 } else {
-                    return null; // Invalid path
+                    return null;
                 }
             }
             return current;
         }
 
-        /**
-         * Displays a notification toast.
-         * @param {string} message - The message to display.
-         * @param {string} type - 'success' or 'error' for styling.
-         */
         function showNotification(message, type = 'success') {
             DOMElements.notificationText.textContent = message;
             const notification = DOMElements.notification;
             notification.className = `fixed bottom-5 right-5 text-white px-6 py-3 rounded-lg shadow-xl translate-x-[120%] opacity-0 ${type === 'error' ? 'bg-red-600' : 'bg-gray-800'}`;
             
-            // Animate in
             setTimeout(() => {
                 notification.classList.remove('translate-x-[120%]', 'opacity-0');
                 notification.classList.add('translate-x-0', 'opacity-100');
             }, 10);
 
-            // Animate out after 3 seconds
             setTimeout(() => {
                 notification.classList.remove('translate-x-0', 'opacity-100');
                 notification.classList.add('translate-x-[120%]', 'opacity-0');
             }, 3000);
         }
 
-        /**
-         * Shows a custom confirmation dialog.
-         * @param {string} text - The confirmation message.
-         * @returns {Promise<boolean>} - A promise that resolves to true if confirmed, false otherwise.
-         */
         function showConfirm(text) {
             return new Promise((resolve) => {
                 DOMElements.confirmModalText.textContent = text;
@@ -485,6 +529,8 @@
 
         // --- INITIAL SETUP & EVENT LISTENERS ---
         
+        DOMElements.showLoginBtn.addEventListener('click', showLoginModal);
+        DOMElements.hideLoginBtn.addEventListener('click', hideLoginModal);
         DOMElements.loginButton.addEventListener('click', handleLogin);
         DOMElements.passwordInput.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') handleLogin();

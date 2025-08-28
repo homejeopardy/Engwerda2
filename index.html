@@ -26,8 +26,7 @@
             transition: transform 0.3s ease-in-out, opacity 0.3s ease-in-out;
         }
     </style>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body class="text-gray-800">
 
@@ -53,7 +52,7 @@
                     <p class="text-center font-semibold mt-2 group-hover:underline">MCR: A Short Film</p>
                 </a>
                 
-                <a href="https://youtu.be/MURjoBiJ1BI?si=KFvVkXH93ANzexq8" target="_blank" class="block group">
+                <a href="https://youtu.be/MURjoBiJ1BI?si=KFyVkXH93ANzexq8" target="_blank" class="block group">
                     <div class="rounded-lg overflow-hidden shadow-lg transform group-hover:scale-105 transition-transform duration-300">
                         <img src="https://i.ytimg.com/vi/MURjoBiJ1BI/mqdefault.jpg" alt="Top Gun (Clean Version) Thumbnail" class="w-full h-auto object-cover">
                     </div>
@@ -136,7 +135,13 @@
         // The key used to track login status
         const AUTH_KEY = 'engwerda-studio-auth';
 
-        // Initial, default file structure if none exists in Firebase
+        // Your Supabase API keys.
+        // Replace these with your actual keys from Step 1.
+        const supabaseUrl = 'YOUR_SUPABASE_URL_HERE';
+        const supabaseKey = 'YOUR_SUPABASE_ANON_KEY_HERE';
+
+        const supabase = createClient(supabaseUrl, supabaseKey);
+
         const defaultFileStructure = {
             name: "Home",
             folders: [
@@ -152,33 +157,6 @@
         let fileStructure = {};
         let currentPath = []; // An array of indices to navigate the structure
         let isAdmin = false;
-        
-        // --- YOUR FIREBASE CONFIGURATION GOES HERE ---
-        // REPLACE WITH YOUR ACTUAL CONFIG FROM THE FIREBASE CONSOLE
-        const firebaseConfig = {
-          apiKey: "AIzaSyB_gQ8RvwJV2Q8B_MxvZGJ-P91H9w0kcRY",
-          authDomain: "engwerda-ad129.firebaseapp.com",
-          databaseURL: "https://engwerda-ad229-default-rtdb.firebaseio.com",
-          projectId: "engwerda-ad129",
-          storageBucket: "engwerda-ad129.appspot.com",
-          messagingSenderId: "432930746151",
-          appId: "1:432930746151:web:55f1c7d1b92563029d0302"
-        };
-
-        // const firebaseConfig = {
-  //apiKey: "AIzaSyB_gQ8RvwJV2Q8B_MxvZGJ-P91H9w0kcRY",
-  //authDomain: "engwerda-ad129.firebaseapp.com",
-  //databaseURL: "https://engwerda-ad129-default-rtdb.firebaseio.com",
-  //projectId: "engwerda-ad129",
-  //storageBucket: "engwerda-ad129.firebasestorage.app",
-  //messagingSenderId: "432930746151",
-  //appId: "1:432930746151:web:55f1c7d1b92563029d0302",
-  //measurementId: "G-9ZPJHNZXGC"
-        
-        // Initialize Firebase
-        const app = firebase.initializeApp(firebaseConfig);
-        const database = app.database();
-        const dbRef = database.ref('fileStructure');
 
         // --- DOM ELEMENT REFERENCES ---
         const DOMElements = {
@@ -209,49 +187,72 @@
             confirmModalConfirm: document.getElementById('confirm-modal-confirm'),
         };
 
-        // --- DATA MANAGEMENT (Firebase) ---
+        // --- DATA MANAGEMENT (Supabase) ---
 
         /**
-         * Listens to changes in the database and updates the local file structure.
+         * Fetches the file structure from Supabase.
          */
-        function loadStructure() {
-            dbRef.on('value', (snapshot) => {
-                const data = snapshot.val();
-                if (data) {
-                    fileStructure = data;
-                    console.log("Structure loaded from Firebase.");
-                } else {
-                    console.log("No structure found in Firebase, saving default.");
+        async function fetchStructure() {
+            try {
+                const { data, error } = await supabase
+                    .from('fileStructure')
+                    .select('data')
+                    .single();
+
+                if (error && error.code === 'PGRST116') {
+                    // No data found, so insert the default structure
+                    const { error: insertError } = await supabase
+                        .from('fileStructure')
+                        .insert([{ data: defaultFileStructure }]);
+
+                    if (insertError) {
+                        throw insertError;
+                    }
                     fileStructure = defaultFileStructure;
-                    saveStructure();
-                }
-                // Re-render the correct view after data is loaded
-                if (localStorage.getItem(AUTH_KEY)) {
-                    showContentView();
+                } else if (error) {
+                    throw error;
                 } else {
-                    renderPublicView();
+                    fileStructure = data.data;
                 }
-            }, (error) => {
-                console.error("Error loading data from Firebase:", error);
+            } catch (error) {
+                console.error("Error loading data from Supabase:", error.message);
                 showNotification("Failed to connect to the database.", "error");
                 renderPublicView(); // Fallback to public view on error
-            });
+            }
         }
 
         /**
-         * Saves the current file structure to Firebase.
+         * Saves the current file structure to Supabase.
          */
-        function saveStructure() {
-            dbRef.set(fileStructure)
-                .then(() => {
-                    console.log("Structure saved to Firebase.");
-                })
-                .catch(error => {
-                    console.error("Error saving to Firebase:", error);
-                    showNotification("Failed to save changes.", "error");
-                });
+        async function saveStructure() {
+            try {
+                const { error } = await supabase
+                    .from('fileStructure')
+                    .update({ data: fileStructure })
+                    .eq('id', 1); // We assume there's only one row with ID 1
+
+                if (error) throw error;
+                console.log("Structure saved to Supabase.");
+            } catch (error) {
+                console.error("Error saving to Supabase:", error.message);
+                showNotification("Failed to save changes.", "error");
+            }
         }
-        
+
+        /**
+         * Sets up a real-time listener for database changes.
+         */
+        function setupRealtimeListener() {
+            supabase
+                .channel('file_updates')
+                .on('postgres_changes', { event: '*', schema: 'public', table: 'fileStructure' }, (payload) => {
+                    fileStructure = payload.new.data;
+                    console.log("Realtime update received from Supabase.", payload);
+                    render(); // Re-render the UI with the new data
+                })
+                .subscribe();
+        }
+
         // --- VIEW MANAGEMENT & AUTHENTICATION ---
 
         /**
@@ -338,10 +339,16 @@
         /**
          * Initializes the app by checking for a logged-in state.
          */
-        function initializeApp() {
+        async function initializeApp() {
             DOMElements.loading.style.display = 'none';
-            // Start listening to the database
-            loadStructure();
+            await fetchStructure();
+            setupRealtimeListener();
+
+            if (localStorage.getItem(AUTH_KEY)) {
+                showContentView();
+            } else {
+                renderPublicView();
+            }
         }
         
         // --- RENDERING LOGIC ---
@@ -485,4 +492,83 @@
             const itemArray = type === 'folder' ? currentFolder.folders : currentFolder.links;
             const itemName = itemArray[index].name;
 
-            const
+            const confirmed = await showConfirm(`Are you sure you want to delete "${itemName}"?`);
+            if (confirmed) {
+                itemArray.splice(index, 1);
+                saveStructure();
+                showNotification(`"${itemName}" was deleted.`, "success");
+            }
+        }
+
+        // --- UTILITY FUNCTIONS ---
+        
+        function getCurrentFolder() {
+            let current = fileStructure;
+            for (const index of currentPath) {
+                if (current && current.folders && current.folders[index]) {
+                    current = current.folders[index];
+                } else {
+                    return null;
+                }
+            }
+            return current;
+        }
+
+        function showNotification(message, type = 'success') {
+            DOMElements.notificationText.textContent = message;
+            const notification = DOMElements.notification;
+            notification.className = `fixed bottom-5 right-5 text-white px-6 py-3 rounded-lg shadow-xl translate-x-[120%] opacity-0 ${type === 'error' ? 'bg-red-600' : 'bg-gray-800'}`;
+            
+            setTimeout(() => {
+                notification.classList.remove('translate-x-[120%]', 'opacity-0');
+                notification.classList.add('translate-x-0', 'opacity-100');
+            }, 10);
+
+            setTimeout(() => {
+                notification.classList.remove('translate-x-0', 'opacity-100');
+                notification.classList.add('translate-x-[120%]', 'opacity-0');
+            }, 3000);
+        }
+
+        function showConfirm(text) {
+            return new Promise((resolve) => {
+                DOMElements.confirmModalText.textContent = text;
+                DOMElements.confirmModal.classList.remove('hidden');
+
+                const cancelHandler = () => {
+                    DOMElements.confirmModal.classList.add('hidden');
+                    DOMElements.confirmModalConfirm.removeEventListener('click', confirmHandler);
+                    DOMElements.confirmModalCancel.removeEventListener('click', cancelHandler);
+                    resolve(false);
+                };
+
+                const confirmHandler = () => {
+                    DOMElements.confirmModal.classList.add('hidden');
+                    DOMElements.confirmModalConfirm.removeEventListener('click', confirmHandler);
+                    DOMElements.confirmModalCancel.removeEventListener('click', cancelHandler);
+                    resolve(true);
+                };
+
+                DOMElements.confirmModalCancel.addEventListener('click', cancelHandler, { once: true });
+                DOMElements.confirmModalConfirm.addEventListener('click', confirmHandler, { once: true });
+            });
+        }
+
+        // --- INITIAL SETUP & EVENT LISTENERS ---
+        
+        DOMElements.showLoginBtn.addEventListener('click', showLoginModal);
+        DOMElements.hideLoginBtn.addEventListener('click', hideLoginModal);
+        DOMElements.loginButton.addEventListener('click', handleLogin);
+        DOMElements.passwordInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') handleLogin();
+        });
+        DOMElements.addFolderBtn.addEventListener('click', handleAddFolder);
+        DOMElements.addLinkBtn.addEventListener('click', handleAddLink);
+        DOMElements.backButton.addEventListener('click', handleGoBack);
+        DOMElements.logoutButton.addEventListener('click', handleLogout);
+
+        // Start the application
+        initializeApp();
+    </script>
+</body>
+</html>

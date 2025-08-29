@@ -549,7 +549,7 @@
 
                 const confirmHandler = () => {
                     DOMElements.confirmModal.classList.add('hidden');
-                    DOMEElements.confirmModalConfirm.removeEventListener('click', confirmHandler);
+                    DOMElements.confirmModalConfirm.removeEventListener('click', confirmHandler);
                     DOMElements.confirmModalCancel.removeEventListener('click', cancelHandler);
                     resolve(true);
                 };

@@ -26,7 +26,6 @@
             transition: transform 0.3s ease-in-out, opacity 0.3s ease-in-out;
         }
     </style>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body class="text-gray-800">
 
@@ -134,20 +133,55 @@
 
         // The key used to track login status
         const AUTH_KEY = 'engwerda-studio-auth';
+        // The key to store the file structure in localStorage
+        const DATA_KEY = 'engwerda-studio-data';
 
-        // Your Supabase API keys.
-        // Replace these with your actual keys from Step 1.
-        const supabaseUrl = 'YOUR_SUPABASE_URL_HERE';
-        const supabaseKey = 'YOUR_SUPABASE_ANON_KEY_HERE';
-
-        const supabase = createClient(supabaseUrl, supabaseKey);
-
+        // Initial, default file structure if none exists in localStorage
         const defaultFileStructure = {
             name: "Home",
             folders: [
                 {
                     name: "Private",
-                    folders: [],
+                    folders: [
+                        {
+                            name: "Bike Bandits",
+                            folders: [],
+                            links: [
+                                {
+                                    name: "Script",
+                                    url: "https://docs.google.com/document/d/1Q4dh3V8z6DUza9l331LyEPGyIy-qSbzd3ORSbtXCQhs/edit?tab=t.0"
+                                },
+                                {
+                                    name: "Shot List",
+                                    url: "https://docs.google.com/document/d/1X_BeJ45gtb0zVUEQFVsgdZscoiP7e_0ly3xWsU7Gmmk/edit?tab=t.0"
+                                },
+                                {
+                                    name: "Schedule",
+                                    url: "https://docs.google.com/document/d/1TA4FZHU0iQCPhZDHmvu3mhnSjYGSsywPVJpFWyC_0ZE/edit?tab=t.0"
+                                },
+                                {
+                                    name: "Props",
+                                    url: "https://docs.google.com/document/d/1IrQvtBGHxI8PvRzZ3BNE5Tv4mbqO4fhB3_d0RYR7pvo/edit?tab=t.0"
+                                },
+                                {
+                                    name: "Costumes",
+                                    url: "https://docs.google.com/document/d/1LTg4zOwkyLEB4dHSE_49WGNFELEY8NRK7xtDJm3eZpw/edit?tab=t.0"
+                                },
+                                {
+                                    name: "Marketing",
+                                    url: "https://docs.google.com/document/d/1x3-bH6vlgCi9phXOrsy9hGymUTeDGX20HzU6ofVGT9g/edit?tab=t.0"
+                                },
+                                {
+                                    name: "Cast Resources",
+                                    url: "https://docs.google.com/document/d/1M_d6HgmRIae6kCS54wItWdAuyPzwvVPoRG8XONd5R1g/edit?tab=t.0"
+                                },
+                                {
+                                    name: "Form",
+                                    url: "https://docs.google.com/forms/d/1zHXmQ8s17qJsDZb-mZ4w784DhJmNi1l0zglP6_UNIPA/edit#response=ACYDBNjiP1iZoccmphWNg2s2JuYKyPT07jhr3BsSCDRjBZ-ohbCgGssF0NN8cLUcXpkRW8A"
+                                }
+                            ]
+                        }
+                    ],
                     links: []
                 }
             ],
@@ -157,102 +191,29 @@
         let fileStructure = {};
         let currentPath = []; // An array of indices to navigate the structure
         let isAdmin = false;
-
-        // --- DOM ELEMENT REFERENCES ---
-        const DOMElements = {
-            loading: document.getElementById('loading'),
-            publicView: document.getElementById('public-view'),
-            showLoginBtn: document.getElementById('showLoginBtn'),
-            hideLoginBtn: document.getElementById('hideLoginBtn'),
-            loginView: document.getElementById('login'),
-            contentView: document.getElementById('content-view'),
-            passwordInput: document.getElementById('password'),
-            loginButton: document.getElementById('loginButton'),
-            adminControls: document.getElementById('admin-controls'),
-            fileArea: document.getElementById('fileArea'),
-            breadcrumb: document.getElementById('breadcrumb'),
-            backButton: document.getElementById('backButton'),
-            logoutButton: document.getElementById('logoutButton'),
-            addFolderBtn: document.getElementById('addFolderBtn'),
-            addLinkBtn: document.getElementById('addLinkBtn'),
-            folderNameInput: document.getElementById('folderName'),
-            linkNameInput: document.getElementById('linkName'),
-            linkURLInput: document.getElementById('linkURL'),
-            notification: document.getElementById('notification'),
-            notificationText: document.getElementById('notification-text'),
-            emptyFolderMsg: document.getElementById('empty-folder-msg'),
-            confirmModal: document.getElementById('confirm-modal'),
-            confirmModalText: document.getElementById('confirm-modal-text'),
-            confirmModalCancel: document.getElementById('confirm-modal-cancel'),
-            confirmModalConfirm: document.getElementById('confirm-modal-confirm'),
-        };
-
-        // --- DATA MANAGEMENT (Supabase) ---
+        
+        // --- DATA MANAGEMENT (localStorage) ---
 
         /**
-         * Fetches the file structure from Supabase.
+         * Loads the file structure from localStorage or uses the default.
          */
-        async function fetchStructure() {
-            try {
-                const { data, error } = await supabase
-                    .from('fileStructure')
-                    .select('data')
-                    .single();
-
-                if (error && error.code === 'PGRST116') {
-                    // No data found, so insert the default structure
-                    const { error: insertError } = await supabase
-                        .from('fileStructure')
-                        .insert([{ data: defaultFileStructure }]);
-
-                    if (insertError) {
-                        throw insertError;
-                    }
-                    fileStructure = defaultFileStructure;
-                } else if (error) {
-                    throw error;
-                } else {
-                    fileStructure = data.data;
-                }
-            } catch (error) {
-                console.error("Error loading data from Supabase:", error.message);
-                showNotification("Failed to connect to the database.", "error");
-                renderPublicView(); // Fallback to public view on error
+        function loadStructure() {
+            const storedData = localStorage.getItem(DATA_KEY);
+            if (storedData) {
+                fileStructure = JSON.parse(storedData);
+            } else {
+                fileStructure = defaultFileStructure;
+                saveStructure();
             }
         }
 
         /**
-         * Saves the current file structure to Supabase.
+         * Saves the current file structure to localStorage.
          */
-        async function saveStructure() {
-            try {
-                const { error } = await supabase
-                    .from('fileStructure')
-                    .update({ data: fileStructure })
-                    .eq('id', 1); // We assume there's only one row with ID 1
-
-                if (error) throw error;
-                console.log("Structure saved to Supabase.");
-            } catch (error) {
-                console.error("Error saving to Supabase:", error.message);
-                showNotification("Failed to save changes.", "error");
-            }
+        function saveStructure() {
+            localStorage.setItem(DATA_KEY, JSON.stringify(fileStructure));
         }
-
-        /**
-         * Sets up a real-time listener for database changes.
-         */
-        function setupRealtimeListener() {
-            supabase
-                .channel('file_updates')
-                .on('postgres_changes', { event: '*', schema: 'public', table: 'fileStructure' }, (payload) => {
-                    fileStructure = payload.new.data;
-                    console.log("Realtime update received from Supabase.", payload);
-                    render(); // Re-render the UI with the new data
-                })
-                .subscribe();
-        }
-
+        
         // --- VIEW MANAGEMENT & AUTHENTICATION ---
 
         /**
@@ -339,10 +300,9 @@
         /**
          * Initializes the app by checking for a logged-in state.
          */
-        async function initializeApp() {
+        function initializeApp() {
             DOMElements.loading.style.display = 'none';
-            await fetchStructure();
-            setupRealtimeListener();
+            loadStructure();
 
             if (localStorage.getItem(AUTH_KEY)) {
                 showContentView();
@@ -468,6 +428,7 @@
             currentFolder.folders.push({ name: name, folders: [], links: [] });
             DOMElements.folderNameInput.value = "";
             saveStructure();
+            render();
             showNotification(`Folder "${name}" added.`, "success");
         }
 
@@ -484,6 +445,7 @@
             DOMElements.linkNameInput.value = "";
             DOMElements.linkURLInput.value = "";
             saveStructure();
+            render();
             showNotification(`Link "${name}" added.`, "success");
         }
         
@@ -496,6 +458,7 @@
             if (confirmed) {
                 itemArray.splice(index, 1);
                 saveStructure();
+                render();
                 showNotification(`"${itemName}" was deleted.`, "success");
             }
         }

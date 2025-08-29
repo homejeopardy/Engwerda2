@@ -18,7 +18,7 @@
             font-family: 'Playfair Display', serif;
         }
         /* A subtle transition for hover effects */
-        .item, button {
+        .item, button, .video-card {
             transition: all 0.2s ease-in-out;
         }
         /* Custom styles for the notification toast */
@@ -38,36 +38,49 @@
             <p class="text-lg text-gray-500">Loading Studio...</p>
         </div>
         
-        <div id="public-view" class="hidden bg-white p-6 md:p-8 rounded-xl shadow-md">
-            <p class="text-lg font-semibold mb-6 text-center">My studio name is Engwerda Studios. I, Austin Engwerda make movies with my friends and family. I started making films at the start of the covid 19 lockdown in 2020. They include a budget, a script, a cast , and editing the movie on CapCut. Please Subscribe and like to my channel Engwerda Studios.</p>
-            
-            <h2 class="text-2xl font-bold text-red-800 mb-6 text-center">Latest Projects</h2>
+        <div id="public-view" class="bg-white p-6 md:p-8 rounded-xl shadow-lg">
 
+            <div class="relative bg-gray-900 text-white rounded-xl overflow-hidden mb-8 shadow-inner">
+                <img src="https://images.unsplash.com/photo-1542204165-f480436d649d?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w1MDcxMzJ8MHwxfHNlYXJjaHw3fHxmaWxtJTIwY3Jld3xlbnwwfHx8fDE3MjQ5MDQwNzB8MA&ixlib=rb-4.0.3&q=80&w=1080" alt="Film studio hero image" class="absolute inset-0 w-full h-full object-cover opacity-50">
+                <div class="relative p-12 text-center">
+                    <h2 class="text-5xl md:text-6xl font-extrabold mb-2 leading-tight">Engwerda Studios</h2>
+                    <p class="text-xl md:text-2xl font-light">Making films, one frame at a time.</p>
+                </div>
+            </div>
+
+            <div class="mb-8">
+                <h2 class="text-3xl font-bold text-red-800 mb-4 text-center">About Engwerda Studios</h2>
+                <p class="text-lg font-semibold mb-6 text-center">I, Austin Engwerda, make movies with my friends and family. I started making films at the start of the Covid-19 lockdown in 2020. My projects include a budget, a script, a cast, and are edited on CapCut. Please subscribe and like to my channel, Engwerda Studios, on YouTube!</p>
+            </div>
+            
+            <h2 class="text-3xl font-bold text-red-800 mb-6 text-center">Latest Projects</h2>
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
                 <a href="https://youtu.be/kSL0ma11K5A?si=648oA3TVukLqFAXB" target="_blank" class="block group">
-                    <div class="rounded-lg overflow-hidden shadow-lg transform group-hover:scale-105 transition-transform duration-300">
+                    <div class="video-card rounded-lg overflow-hidden shadow-lg transform group-hover:scale-105 transition-transform duration-300">
                         <img src="https://i.ytimg.com/vi/kSL0ma11K5A/mqdefault.jpg" alt="M.C.R. Thumbnail" class="w-full h-auto object-cover">
                     </div>
-                    <p class="text-center font-semibold mt-2 group-hover:underline">MCR: A Short Film</p>
+                    <p class="text-center font-semibold mt-2 group-hover:text-red-800">MCR: A Short Film</p>
                 </a>
                 
                 <a href="https://youtu.be/MURjoBiJ1BI?si=KFyVkXH93ANzexq8" target="_blank" class="block group">
-                    <div class="rounded-lg overflow-hidden shadow-lg transform group-hover:scale-105 transition-transform duration-300">
+                    <div class="video-card rounded-lg overflow-hidden shadow-lg transform group-hover:scale-105 transition-transform duration-300">
                         <img src="https://i.ytimg.com/vi/MURjoBiJ1BI/mqdefault.jpg" alt="Top Gun (Clean Version) Thumbnail" class="w-full h-auto object-cover">
                     </div>
-                    <p class="text-center font-semibold mt-2 group-hover:underline">Top Gun (Clean Version)</p>
+                    <p class="text-center font-semibold mt-2 group-hover:text-red-800">Top Gun (Clean Version)</p>
                 </a>
                 
                 <a href="https://youtu.be/pyz3HLDYdRE?si=fH-zCpbSplI99_w0" target="_blank" class="block group">
-                    <div class="rounded-lg overflow-hidden shadow-lg transform group-hover:scale-105 transition-transform duration-300">
+                    <div class="video-card rounded-lg overflow-hidden shadow-lg transform group-hover:scale-105 transition-transform duration-300">
                         <img src="https://i.ytimg.com/vi/pyz3HLDYdRE/mqdefault.jpg" alt="Foux Da Fa Fa-Flight of the Conchords Thumbnail" class="w-full h-auto object-cover">
                     </div>
-                    <p class="text-center font-semibold mt-2 group-hover:underline">Foux Da Fa Fa-Flight of the conchords</p>
+                    <p class="text-center font-semibold mt-2 group-hover:text-red-800">Foux Da Fa Fa-Flight of the conchords</p>
                 </a>
             </div>
             
             <div class="mt-8 pt-6 border-t border-gray-200 text-center">
-                <button id="showLoginBtn" class="text-blue-600 font-bold hover:underline">Log in to Engwerda Studios</button>
+                <button id="showLoginBtn" class="bg-red-700 text-white font-bold py-3 px-8 rounded-lg shadow-md hover:bg-red-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
+                    Log in to Engwerda Studios
+                </button>
             </div>
         </div>
 
@@ -192,6 +205,35 @@
         let currentPath = []; // An array of indices to navigate the structure
         let isAdmin = false;
         
+        // --- DOM ELEMENT REFERENCES ---
+        const DOMElements = {
+            loading: document.getElementById('loading'),
+            publicView: document.getElementById('public-view'),
+            showLoginBtn: document.getElementById('showLoginBtn'),
+            hideLoginBtn: document.getElementById('hideLoginBtn'),
+            loginView: document.getElementById('login'),
+            contentView: document.getElementById('content-view'),
+            passwordInput: document.getElementById('password'),
+            loginButton: document.getElementById('loginButton'),
+            adminControls: document.getElementById('admin-controls'),
+            fileArea: document.getElementById('fileArea'),
+            breadcrumb: document.getElementById('breadcrumb'),
+            backButton: document.getElementById('backButton'),
+            logoutButton: document.getElementById('logoutButton'),
+            addFolderBtn: document.getElementById('addFolderBtn'),
+            addLinkBtn: document.getElementById('addLinkBtn'),
+            folderNameInput: document.getElementById('folderName'),
+            linkNameInput: document.getElementById('linkName'),
+            linkURLInput: document.getElementById('linkURL'),
+            notification: document.getElementById('notification'),
+            notificationText: document.getElementById('notification-text'),
+            emptyFolderMsg: document.getElementById('empty-folder-msg'),
+            confirmModal: document.getElementById('confirm-modal'),
+            confirmModalText: document.getElementById('confirm-modal-text'),
+            confirmModalCancel: document.getElementById('confirm-modal-cancel'),
+            confirmModalConfirm: document.getElementById('confirm-modal-confirm'),
+        };
+
         // --- DATA MANAGEMENT (localStorage) ---
 
         /**
@@ -507,7 +549,7 @@
 
                 const confirmHandler = () => {
                     DOMElements.confirmModal.classList.add('hidden');
-                    DOMElements.confirmModalConfirm.removeEventListener('click', confirmHandler);
+                    DOMEElements.confirmModalConfirm.removeEventListener('click', confirmHandler);
                     DOMElements.confirmModalCancel.removeEventListener('click', cancelHandler);
                     resolve(true);
                 };

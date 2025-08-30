@@ -62,8 +62,9 @@
         <h1 class="text-4xl md:text-5xl font-bold title-font">Engwerda Studios</h1>
         <nav class="mt-4">
             <ul class="flex justify-center space-x-6">
-                <li><a href="#" class="hover:text-red-200 transition-colors duration-200">Home</a></li>
-                <li><a href="#cast-view" class="hover:text-red-200 transition-colors duration-200">Cast</a></li>
+                <li><a href="#public-view" class="hover:text-red-200 transition-colors duration-200" onclick="showPublicView()">Home</a></li>
+                <li><a href="#cast-view" class="hover:text-red-200 transition-colors duration-200" onclick="showPublicView()">Cast</a></li>
+                <li><a href="#blog-view" class="hover:text-red-200 transition-colors duration-200" onclick="showBlogView()">Blog</a></li>
             </ul>
         </nav>
     </header>
@@ -74,7 +75,6 @@
         </div>
         
         <div id="public-view" class="bg-white p-6 md:p-8 rounded-xl shadow-lg">
-
             <div class="relative rounded-xl overflow-hidden mb-8 shadow-inner hero-banner">
                 <div class="relative p-12 text-center text-white">
                     <h2 class="text-5xl md:text-6xl font-extrabold mb-2 leading-tight title-font">
@@ -180,6 +180,20 @@
                 </div>
             </div>
 
+        </div>
+
+        <div id="blog-view" class="hidden bg-white p-6 md:p-8 rounded-xl shadow-lg">
+            <h2 class="text-3xl font-bold text-red-800 mb-6 text-center">Studio Blog</h2>
+            <div id="blogContainer" class="flex flex-col items-center space-y-8">
+                <div class="flex justify-center items-center h-48">
+                    <div class="w-16 h-16 border-4 border-gray-200 border-t-red-600 rounded-full animate-spin"></div>
+                </div>
+            </div>
+            <div class="mt-8 pt-6 border-t border-gray-200 text-center">
+                <button onclick="showPublicView()" class="bg-red-700 text-white font-bold py-3 px-8 rounded-lg shadow-md hover:bg-red-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
+                    Back to Home
+                </button>
+            </div>
         </div>
 
         <div id="login" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
@@ -303,56 +317,31 @@
         let currentPath = []; // An array of indices to navigate the structure
         let isAdmin = false;
 
-        // --- DATA MANAGEMENT (localStorage) ---
-
-        /**
-         * Loads the file structure from localStorage or uses the default.
-         */
-        function loadStructure() {
-            const storedData = localStorage.getItem(DATA_KEY);
-            if (storedData) {
-                fileStructure = JSON.parse(storedData);
-            } else {
-                fileStructure = defaultFileStructure;
-                saveStructure();
-            }
-        }
-
-        /**
-         * Saves the current file structure to localStorage.
-         */
-        function saveStructure() {
-            localStorage.setItem(DATA_KEY, JSON.stringify(fileStructure));
-        }
-        
         // --- VIEW MANAGEMENT & AUTHENTICATION ---
 
-        /**
-         * Renders the public view.
-         */
-        function renderPublicView() {
+        function showPublicView() {
+            DOMElements.publicView.classList.remove('hidden');
+            DOMElements.blogView.classList.add('hidden');
             DOMElements.loginView.classList.add('hidden');
             DOMElements.contentView.classList.add('hidden');
-            DOMElements.publicView.classList.remove('hidden');
         }
 
-        /**
-         * Shows the login modal.
-         */
+        function showBlogView() {
+            DOMElements.publicView.classList.add('hidden');
+            DOMElements.blogView.classList.remove('hidden');
+            DOMElements.loginView.classList.add('hidden');
+            DOMElements.contentView.classList.add('hidden');
+            renderBlog();
+        }
+
         function showLoginModal() {
             DOMElements.loginView.classList.remove('hidden');
         }
 
-        /**
-         * Hides the login modal.
-         */
         function hideLoginModal() {
             DOMElements.loginView.classList.add('hidden');
         }
 
-        /**
-         * Checks password and sets the view (Studio or Admin).
-         */
         function handleLogin() {
             const pw = DOMElements.passwordInput.value;
             DOMElements.passwordInput.value = '';
@@ -370,15 +359,12 @@
             }
         }
 
-        /**
-         * Switches the view to the main content area after successful login.
-         */
         function showContentView() {
             DOMElements.loginView.classList.add('hidden');
             DOMElements.publicView.classList.add('hidden');
+            DOMElements.blogView.classList.add('hidden');
             DOMElements.contentView.classList.remove('hidden');
             DOMElements.adminControls.style.display = isAdmin ? 'block' : 'none';
-            // Set the path to the 'Private' folder for logged-in users
             const privateFolderIndex = fileStructure.folders.findIndex(f => f.name === 'Private');
             if (privateFolderIndex !== -1) {
                 currentPath = [privateFolderIndex];
@@ -388,9 +374,6 @@
             render();
         }
 
-        /**
-         * Navigates one level up in the folder structure.
-         */
         function handleGoBack() {
             if (currentPath.length > 0) {
                 currentPath.pop();
@@ -398,35 +381,31 @@
             }
         }
 
-        /**
-         * Logs the user out and returns to the public view.
-         */
         function handleLogout() {
             currentPath = [];
             isAdmin = false;
             localStorage.removeItem(AUTH_KEY);
-            renderPublicView();
+            showPublicView();
         }
 
-        /**
-         * Initializes the app by checking for a logged-in state.
-         */
-        function initializeApp() {
-            DOMElements.loading.style.display = 'none';
-            loadStructure();
+        // --- DATA MANAGEMENT (localStorage) ---
 
-            if (localStorage.getItem(AUTH_KEY)) {
-                showContentView();
+        function loadStructure() {
+            const storedData = localStorage.getItem(DATA_KEY);
+            if (storedData) {
+                fileStructure = JSON.parse(storedData);
             } else {
-                renderPublicView();
+                fileStructure = defaultFileStructure;
+                saveStructure();
             }
+        }
+
+        function saveStructure() {
+            localStorage.setItem(DATA_KEY, JSON.stringify(fileStructure));
         }
         
         // --- RENDERING LOGIC ---
         
-        /**
-         * Main render function to update the entire UI based on state.
-         */
         function render() {
             const currentFolder = getCurrentFolder();
             if (!currentFolder) {
@@ -437,7 +416,6 @@
             }
             
             renderBreadcrumb();
-
             DOMElements.fileArea.innerHTML = '';
             
             const items = [...(currentFolder.folders || []), ...(currentFolder.links || [])];
@@ -454,9 +432,50 @@
             DOMElements.backButton.disabled = currentPath.length === 0;
         }
 
-        /**
-         * Creates an HTML element for a folder or link.
-         */
+        async function renderBlog() {
+            const blogContainer = document.getElementById('blogContainer');
+            blogContainer.innerHTML = `
+                <div class="flex justify-center items-center h-48">
+                    <div class="w-16 h-16 border-4 border-gray-200 border-t-red-600 rounded-full animate-spin"></div>
+                </div>
+            `;
+            
+            let imagesLoaded = false;
+            let imageCounter = 1;
+            const fileExtensions = ['jpg', 'jpeg', 'png', 'gif'];
+
+            for (const ext of fileExtensions) {
+                while (true) {
+                    const imageUrl = `blog/${imageCounter}.${ext}`;
+                    try {
+                        const response = await fetch(imageUrl, { method: 'HEAD' });
+                        if (response.ok) {
+                            if (!imagesLoaded) {
+                                blogContainer.innerHTML = '';
+                                imagesLoaded = true;
+                            }
+                            const imgElement = document.createElement('img');
+                            imgElement.src = imageUrl;
+                            imgElement.alt = `Blog post image ${imageCounter}`;
+                            imgElement.className = 'w-full mb-6 rounded-lg shadow-md';
+                            blogContainer.appendChild(imgElement);
+                            imageCounter++;
+                        } else {
+                            break;
+                        }
+                    } catch (error) {
+                        break;
+                    }
+                }
+                if (imagesLoaded) break;
+            }
+
+            if (!imagesLoaded) {
+                blogContainer.innerHTML = `<p class="text-center text-gray-500 py-8">No blog posts found yet. Check back soon!</p>`;
+            }
+        }
+
+
         function createItemElement(item, type, index) {
             const isFolder = type === 'folder';
             const wrapper = document.createElement('div');
@@ -493,9 +512,6 @@
             return wrapper;
         }
 
-        /**
-         * Renders the breadcrumb navigation path.
-         */
         function renderBreadcrumb() {
             DOMElements.breadcrumb.innerHTML = '';
             let path = fileStructure;
@@ -632,6 +648,7 @@
         const DOMElements = {
             loading: document.getElementById('loading'),
             publicView: document.getElementById('public-view'),
+            blogView: document.getElementById('blog-view'),
             showLoginBtn: document.getElementById('showLoginBtn'),
             hideLoginBtn: document.getElementById('hideLoginBtn'),
             loginView: document.getElementById('login'),

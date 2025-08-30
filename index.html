@@ -7,7 +7,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@700&family=Nanum+Myeongjo:wght@400;700;800&display=swap" rel="stylesheet">
     <style>
         /* Custom styles to complement Tailwind */
         body {
@@ -16,6 +16,11 @@
         }
         header {
             font-family: 'Playfair Display', serif;
+        }
+        /* Custom font for the main title */
+        .title-font {
+            font-family: 'Nanum Myeongjo', serif; /* A typewriter-like font */
+            font-weight: 800; /* Bold */
         }
         /* A subtle transition for hover effects */
         .item, button, .video-card {
@@ -54,7 +59,7 @@
 <body class="text-gray-800">
 
     <header class="fixed top-0 left-0 w-full bg-red-800 text-white p-6 text-center shadow-lg z-50">
-        <h1 class="text-4xl md:text-5xl font-bold">Engwerda Studios</h1>
+        <h1 class="text-4xl md:text-5xl font-bold title-font">Engwerda Studios</h1>
         <nav class="mt-4">
             <ul class="flex justify-center space-x-6">
                 <li><a href="#" class="hover:text-red-200 transition-colors duration-200">Home</a></li>
@@ -72,7 +77,9 @@
 
             <div class="relative rounded-xl overflow-hidden mb-8 shadow-inner hero-banner">
                 <div class="relative p-12 text-center text-white">
-                    <h2 class="text-5xl md:text-6xl font-extrabold mb-2 leading-tight">Engwerda Studios</h2>
+                    <h2 class="text-5xl md:text-6xl font-extrabold mb-2 leading-tight title-font">
+                        <span class="text-red-600">Engwerda</span> Studios
+                    </h2>
                     <p class="text-xl md:text-2xl font-light">Making films, one frame at a time.</p>
                 </div>
             </div>

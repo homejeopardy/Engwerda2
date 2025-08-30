@@ -29,6 +29,26 @@
         body {
             padding-top: 100px;
         }
+        .hero-banner {
+            background-image: url('images/engwerda-banner.jpg');
+            background-size: cover;
+            background-position: center;
+            position: relative;
+        }
+        .hero-banner::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.4); /* Dark overlay for text readability */
+            z-index: 1;
+        }
+        .hero-banner .relative {
+            position: relative;
+            z-index: 2; /* Ensure text is above overlay */
+        }
     </style>
 </head>
 <body class="text-gray-800">
@@ -50,8 +70,8 @@
         
         <div id="public-view" class="bg-white p-6 md:p-8 rounded-xl shadow-lg">
 
-            <div class="relative bg-red-800 text-white rounded-xl overflow-hidden mb-8 shadow-inner">
-                <div class="relative p-12 text-center">
+            <div class="relative rounded-xl overflow-hidden mb-8 shadow-inner hero-banner">
+                <div class="relative p-12 text-center text-white">
                     <h2 class="text-5xl md:text-6xl font-extrabold mb-2 leading-tight">Engwerda Studios</h2>
                     <p class="text-xl md:text-2xl font-light">Making films, one frame at a time.</p>
                 </div>

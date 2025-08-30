@@ -153,7 +153,7 @@
             name: "Home",
             folders: [
                 {
-                    name: "Private",
+                    name: "Internal",
                     folders: [
                         {
                             name: "Bike Bandits",
@@ -203,35 +203,6 @@
         let fileStructure = {};
         let currentPath = []; // An array of indices to navigate the structure
         let isAdmin = false;
-        
-        // --- DOM ELEMENT REFERENCES ---
-        const DOMElements = {
-            loading: document.getElementById('loading'),
-            publicView: document.getElementById('public-view'),
-            showLoginBtn: document.getElementById('showLoginBtn'),
-            hideLoginBtn: document.getElementById('hideLoginBtn'),
-            loginView: document.getElementById('login'),
-            contentView: document.getElementById('content-view'),
-            passwordInput: document.getElementById('password'),
-            loginButton: document.getElementById('loginButton'),
-            adminControls: document.getElementById('admin-controls'),
-            fileArea: document.getElementById('fileArea'),
-            breadcrumb: document.getElementById('breadcrumb'),
-            backButton: document.getElementById('backButton'),
-            logoutButton: document.getElementById('logoutButton'),
-            addFolderBtn: document.getElementById('addFolderBtn'),
-            addLinkBtn: document.getElementById('addLinkBtn'),
-            folderNameInput: document.getElementById('folderName'),
-            linkNameInput: document.getElementById('linkName'),
-            linkURLInput: document.getElementById('linkURL'),
-            notification: document.getElementById('notification'),
-            notificationText: document.getElementById('notification-text'),
-            emptyFolderMsg: document.getElementById('empty-folder-msg'),
-            confirmModal: document.getElementById('confirm-modal'),
-            confirmModalText: document.getElementById('confirm-modal-text'),
-            confirmModalCancel: document.getElementById('confirm-modal-cancel'),
-            confirmModalConfirm: document.getElementById('confirm-modal-confirm'),
-        };
 
         // --- DATA MANAGEMENT (localStorage) ---
 
@@ -577,7 +548,7 @@
             addLinkBtn: document.getElementById('addLinkBtn'),
             folderNameInput: document.getElementById('folderName'),
             linkNameInput: document.getElementById('linkName'),
-            linkURLInput: document('linkURL'),
+            linkURLInput: document.getElementById('linkURL'),
             notification: document.getElementById('notification'),
             notificationText: document.getElementById('notification-text'),
             emptyFolderMsg: document.getElementById('empty-folder-msg'),
